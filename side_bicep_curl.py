@@ -1,24 +1,24 @@
 import time
 class side_bicep_curl(object):
     def __init__(self):
-        self.xShoulder = -1
-        self.yShoulder = -1
-        self.xElbow = -1
-        self.yElbow = -1
-        self.xWrist = -1
-        self.yWrist = -1
-        self.startPoint = None
-        self.startPoint2 = None
-        self.finalPoint = None
-        self.progress = 0
-        self.rep = 0
-        self.counted = False
-        self.last_keypoint_time = {
-            "shoulder": time.time(),
-            "wrist": time.time(),
-            "elbow": time.time()
-        }
-        self.display_colors = ""
+        # self.xShoulder = -1
+        # self.yShoulder = -1
+        # self.xElbow = -1
+        # self.yElbow = -1
+        # self.xWrist = -1
+        # self.yWrist = -1
+        # self.startPoint = None
+        # self.startPoint2 = None
+        # self.finalPoint = None
+        # self.progress = 0
+        # self.rep = 0
+        # self.counted = False
+        # self.last_keypoint_time = {
+        #     "shoulder": time.time(),
+        #     "wrist": time.time(),
+        #     "elbow": time.time()
+        # }
+        # self.display_colors = ""
     def sbc(self,display_colors,midpointX,midpointY):
         current_time = time.time()
         self.display_colors = display_colors
