@@ -1746,7 +1746,7 @@ class DLCLiveGUI(object):
     def load_image(self):
         # Load image
         image = Image.open(self.image_path)
-        image = image.resize((300, 300), Image.ANTIALIAS)  # Resize image as needed
+        image = image.resize((500, 600), Image.ANTIALIAS)  # Resize image as needed
         self.photo = ImageTk.PhotoImage(image)
 
         # Display image using grid
@@ -1754,7 +1754,7 @@ class DLCLiveGUI(object):
             self.label.config(image=self.photo)
         else:
             self.label = Label(self.window, image=self.photo)
-            self.label.grid(row=0, column=3)  # Use grid instead of pack
+            self.label.grid(row=0, column=3, columnspan=2)  # Use grid instead of pack
     def set_image_path(self, new_path):
         self.image_path = new_path
         self.load_image()

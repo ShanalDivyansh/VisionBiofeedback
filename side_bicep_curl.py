@@ -48,7 +48,7 @@ class side_bicep_curl(object):
             if self.display_colors == "#000c7c":
                 self.xWrist, self.yWrist = midpointX,midpointY
 
-            if abs( self.xShoulder -  self.xElbow)>8:
+            if abs( self.xShoulder -  self.xElbow)>12:
                 self.aligned  = False
                 raise Exception ("Shoulder and elbow not aligned")
             if not abs( self.xShoulder -  self.xElbow)>8:
@@ -78,7 +78,7 @@ class side_bicep_curl(object):
                     "reps": self.rep,
                     "progress":self.progress,
                     "Xwrist": self.xWrist,
-                    "Ywrist":self.yWrist,
+                    "Ywrist":self.yWrist*-1,
                     "aligned":self.aligned,
                     "found":self.allFound
                 }
