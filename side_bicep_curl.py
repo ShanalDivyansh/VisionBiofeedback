@@ -18,7 +18,9 @@ class side_bicep_curl(object):
             "wrist": time.time(),
             "elbow": time.time()
         }
+        self.allFound = False 
         self.display_colors = ""
+        self.aligned = False
     def sbc(self,display_colors,midpointX,midpointY):
         current_time = time.time()
         self.display_colors = display_colors
@@ -33,38 +35,50 @@ class side_bicep_curl(object):
             self.last_keypoint_time["elbow"] = time.time()
 
         if current_time - self.last_keypoint_time["shoulder"] > 5  or current_time - self.last_keypoint_time["wrist"] > 5 or current_time - self.last_keypoint_time["elbow"] > 5:
-            raise Exception
+            self.allFound = False
+            raise Exception("Error: One or more keypoints not found for more than 5 seconds")
+        if not (current_time - self.last_keypoint_time["shoulder"] > 5  or current_time - self.last_keypoint_time["wrist"] > 5 or current_time - self.last_keypoint_time["elbow"] > 5):
+            self.allFound = True
+        
+        if self.allFound:
+            if self.display_colors == "#32ba19":
+                self.xShoulder,self.yShoulder = midpointX,midpointY
+            if self.display_colors == "#005fa3":
+                self.xElbow, self.yElbow = midpointX,midpointY
+            if self.display_colors == "#000c7c":
+                self.xWrist, self.yWrist = midpointX,midpointY
 
-        if self.display_colors == "#32ba19":
-            self.xShoulder,self.yShoulder = midpointX,midpointY
-        #     # print( self.xShoulder, self.yShoulder,"**SHOULDER**")
-        if self.display_colors == "#005fa3":
-            self.xElbow, self.yElbow = midpointX,midpointY
-        #     # print( self.xElbow, self.yElbow,"**ELBOW**")
-        if self.display_colors == "#000c7c":
-            self.xWrist, self.yWrist = midpointX,midpointY
-        #     # print( self.xWrist, self.yWrist,"**Wrist**")                                      
+            if abs( self.xShoulder -  self.xElbow)>8:
+                self.aligned  = False
+                raise Exception ("Shoulder and elbow not aligned")
+            if not abs( self.xShoulder -  self.xElbow)>8:
+                self.aligned  = True
+            # print(self.xShoulder-self.xWrist)
+            if self.aligned:
+                self.finalPoint = self.yShoulder+47
+                ## Start position
+                if not self.startPoint:
+                    # print("SHOULDER WRIST AND ELBOW ARE ALIGNED")
+                    if 40.0 <= abs(self.xShoulder - self.xWrist) <= 60.0:
+                        self.startPoint = self.yWrist
+                        
+                # print( "93","PROGRESSSSSSSSSS",self.finalPoint,self.startPoint,self.yWrist)
 
-        if abs( self.xShoulder -  self.xElbow)>8:
-            print("Shoulder and elbow not aligned")
-        # print(self.xShoulder-self.xWrist)
-        self.finalPoint = self.yShoulder+47
-        ## Start position
-        if not self.startPoint:
-            print("SHOULDER WRIST AND ELBOW ARE ALIGNED")
-            if 40.0 <= abs(self.xShoulder - self.xWrist) <= 60.0:
-                self.startPoint = self.yWrist
-                
-        print( "93","PROGRESSSSSSSSSS",self.finalPoint,self.startPoint,self.yWrist)
-
-        self.progress = ( (self.startPoint-self.yWrist)/(self.startPoint-self.finalPoint))*100
-                                    
-        print(self.counted)
-        if self.startPoint and not self.counted:
-            if self.progress>95:
-                self.counted = True 
-        if self.progress <5 and self.counted:
-            self.rep = self.rep +1
-            self.counted = False
-                                    
-        print(self.rep)
+                self.progress = ( (self.startPoint-self.yWrist)/(self.startPoint-self.finalPoint))*100
+                                            
+                # print(self.counted)
+                if self.startPoint and not self.counted:
+                    if self.progress>95:
+                        self.counted = True 
+                if self.progress <5 and self.counted:
+                    self.rep = self.rep +1
+                    self.counted = False
+                print(self.progress)                  
+                return {
+                    "reps": self.rep,
+                    "progress":self.progress,
+                    "Xwrist": self.xWrist,
+                    "Ywrist":self.yWrist,
+                    "aligned":self.aligned,
+                    "found":self.allFound
+                }

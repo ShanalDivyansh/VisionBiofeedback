@@ -20,7 +20,15 @@ from tkinter import (
     filedialog,
     messagebox,
     simpledialog,
+    ttk
 )
+import os
+import glob
+import tkinter
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import numpy as np
 from tkinter.ttk import Combobox
 import os
 import sys
@@ -89,6 +97,10 @@ class DLCLiveGUI(object):
         self.rep = 0
         self.counted = False
         self.selected_option = ""
+        self.XWristArr = []
+        self.YWristArr = []
+        self.aligned = False 
+        self.AllFound = False
         ### create GUI window ###
         self.side_curl = side_bicep_curl()
         self.last_keypoint_time = {
@@ -96,8 +108,11 @@ class DLCLiveGUI(object):
             "wrist": time.time(),
             "elbow": time.time()
         }
+        self.progress_index = 0
 
+       
 
+        self.progressArr = []
 
         self.createGUI()
 
@@ -538,62 +553,22 @@ class DLCLiveGUI(object):
 
                                 if self.selected_option == r"C:\Users\shana\Documents\DeepLabCut-live-GUI\config\Excercise-1.json":
                                     
-                                    self.side_curl.sbc(self.display_colors[i],midpointX,midpointY)
-                                    # current_time = time.time()
+                                    data = self.side_curl.sbc(self.display_colors[i],midpointX,midpointY)
 
-                                    # if self.display_colors[i] == "#32ba19":
-                                    #     self.last_keypoint_time["shoulder"] = time.time()
-                                    
-                                    # if self.display_colors[i] == "#000c7c":
-                                    #     self.last_keypoint_time["wrist"] = time.time()
-
-                                    
-                                    # if self.display_colors[i] == "#005fa3":
-                                    #     self.last_keypoint_time["elbow"] = time.time()
-                                    
-                                    # if current_time - self.last_keypoint_time["shoulder"] > 5  or current_time - self.last_keypoint_time["wrist"] > 5 or current_time - self.last_keypoint_time["elbow"] > 5:
-                                    #     raise Exception
-
-                                    # if  self.display_colors[i] == "#32ba19":
-                                    #     self.xShoulder,self.yShoulder = midpointX,midpointY
-                                    # #     # print( self.xShoulder, self.yShoulder,"**SHOULDER**")
-                                    # if self.display_colors[i] == "#005fa3":
-                                    #     self.xElbow, self.yElbow = midpointX,midpointY
-                                    # #     # print( self.xElbow, self.yElbow,"**ELBOW**")
-                                    # if self.display_colors[i] == "#000c7c":
-                                    #     self.xWrist, self.yWrist = midpointX,midpointY
-                                    # #     # print( self.xWrist, self.yWrist,"**Wrist**")                                      
-
-                                    # if abs( self.xShoulder -  self.xElbow)>8:
-                                    #     print("Shoulder and elbow not aligned")
-                                    # # print(self.xShoulder-self.xWrist)
-                                    # self.finalPoint = self.yShoulder+47
-                                    # ## Start position
-                                    # if not self.startPoint:
-                                    #     print("PLEASE ALIGN YOUR SHOULDER WRIST AND ELBOW")
-                                    #     if 40.0 <= abs(self.xShoulder - self.xWrist) <= 60.0:
-                                    #         self.startPoint = self.yWrist
-                                    # # if self.yWrist<self.startPoint:
-                                    # #     self.startPoint = 
-                                    # print(( (self.startPoint-self.yWrist)/(self.startPoint-self.finalPoint))*100,"PROGRESSSSSSSSSS",self.finalPoint,self.startPoint,self.yWrist)
-
-                                    # self.progress = ( (self.startPoint-self.yWrist)/(self.startPoint-self.finalPoint))*100
-                                    
-                                    # print(self.counted)
-                                    # if self.startPoint and not self.counted:
-                                    #     if self.progress>95:
-                                    #         self.counted = True 
-                                    # if self.progress <5 and self.counted:
-                                    #     self.rep = self.rep +1
-                                    #     self.counted = False
-                                    
-                                    # print(self.rep)
+                                    self.XWristArr.append(data["Xwrist"])
+                                    self.YWristArr.append(data["Ywrist"])
+                                    self.aligned = data["aligned"]
+                                    self.AllFound = data["found"]
+                                    self.rep = data["reps"]
+                                    self.updateReps(self.rep)
+                                    self.progressArr.append(data["progress"])     
+                                    self.update_progress()                         
                                 else:
                                         current_time = time.time()
                                         # 000c7c - shoulder 
                                         # 32ba19 - wrist
                                         # 005fa3- elbow
-
+                                   
                                         if self.display_colors[i] == "#000c7c":
                                             self.last_keypoint_time["shoulder"] = time.time()
                                         
@@ -606,43 +581,71 @@ class DLCLiveGUI(object):
 
                                         
                                         if current_time - self.last_keypoint_time["shoulder"] > 5  or current_time - self.last_keypoint_time["wrist"] > 5 or current_time - self.last_keypoint_time["elbow"] > 5:
-                                            raise Exception
+                                            self.allFound = False
+                                            raise Exception("Error: One or more keypoints not found for more than 5 seconds")
+                                        if not (current_time - self.last_keypoint_time["shoulder"] > 5  or current_time - self.last_keypoint_time["wrist"] > 5 or current_time - self.last_keypoint_time["elbow"] > 5):
+                                            self.allFound = True
+                                        if self.allFound:
+                                            if  self.display_colors[i] == "#000c7c":
+                                                self.xShoulder,self.yShoulder = midpointX,midpointY
+                                            if self.display_colors[i] == "#005fa3":
+                                                self.xElbow, self.yElbow = midpointX,midpointY
+                                            if self.display_colors[i] == "#32ba19":
+                                                self.xWrist, self.yWrist = midpointX,midpointY
 
-                                        if  self.display_colors[i] == "#000c7c":
-                                            self.xShoulder,self.yShoulder = midpointX,midpointY
-                                        if self.display_colors[i] == "#005fa3":
-                                            self.xElbow, self.yElbow = midpointX,midpointY
-                                        if self.display_colors[i] == "#32ba19":
-                                            self.xWrist, self.yWrist = midpointX,midpointY
+                                            if abs( self.yShoulder -  self.yElbow)>15:
+                                                self.aligned  = False
+                                                raise Exception("Shoulder and elbow not aligned")
+                                            if not abs( self.yShoulder -  self.yElbow)>15:
+                                                self.aligned  = True
 
-                                        if abs( self.yShoulder -  self.yElbow)>15:
-                                            print("Shoulder and elbow not aligned")
+                                            if self.aligned:
+                                                self.finalPoint = self.xShoulder
+                                                ## Start position
+                                                if not self.startPoint2:
+                                                    if 2 <= abs(self.yShoulder - self.yWrist) <= 20.0:
+                                                        self.startPoint2 = self.xWrist-15
 
-                                        self.finalPoint = self.xShoulder
-                                        ## Start position
-                                        if not self.startPoint2:
-                                            print("PLEASE ALIGN YOUR SHOULDER WRIST AND ELBOW")
-                                            if 2 <= abs(self.yShoulder - self.yWrist) <= 20.0:
-                                                self.startPoint2 = self.xWrist-15
-                                                print("Starttttttttttttt")
+                                                self.progress = ( (self.startPoint2-self.xWrist)/(self.startPoint2-self.finalPoint))*100
+                                                
+                                                if self.startPoint2 and not self.counted:
+                                                    if self.progress>95:
+                                                        self.counted = True 
+                                                if self.progress <7 and self.counted:
+                                                    self.rep = self.rep +1
+                                                    self.counted = False
+                                                
+                                                excercise2Data = {
+                                                    "reps": self.rep,
+                                                    "progress":self.progress,
+                                                    "Xwrist": self.xWrist,
+                                                    "Ywrist":self.yWrist,
+                                                    "aligned":self.aligned,
+                                                    "found":self.allFound
+                                                }
+                                                self.XWristArr.append(excercise2Data["Xwrist"])
+                                                self.YWristArr.append(excercise2Data["Ywrist"])
+                                                self.aligned = excercise2Data["aligned"]
+                                                self.AllFound = excercise2Data["found"]
+                                                self.rep = excercise2Data["reps"]
+                                                self.updateReps(self.rep)
+                                                self.progressArr.append(excercise2Data["progress"])     
+                                                self.update_progress()             
 
-                                        print(( (self.startPoint2-self.xWrist)/(self.startPoint2-self.finalPoint))*100,"PROGRESSSSSSSSSS",self.finalPoint,self.startPoint2,self.xWrist)
-
-                                        self.progress = ( (self.startPoint2-self.xWrist)/(self.startPoint2-self.finalPoint))*100
-                                        
-                                        print(self.counted)
-                                        if self.startPoint2 and not self.counted:
-                                            if self.progress>95:
-                                                self.counted = True 
-                                        if self.progress <7 and self.counted:
-                                            self.rep = self.rep +1
-                                            self.counted = False
-                                        
-                                        print(self.rep)
 
                             except Exception as e:
                                 print(e)
-                                print("Error: One or more keypoints not found for more than 5 seconds")
+                                if "Error: One or more keypoints not found for more than 5 seconds" in str(e):
+                                    print("Error: One or more keypoints not found for more than 5 seconds")
+                                    # messagebox.showerror("Error", "Error: One or more keypoints not found for more than 5 seconds")
+                                    self.show_error_message("Error: One or more keypoints not found for more than 5 seconds") 
+                                elif "Shoulder and elbow not aligned" in str(e):
+                                    print ("Shoulder and elbow not aligned")
+                                    self.show_error_message("Shoulder and elbow not aligned")
+                                elif "PLEASE ALIGN YOUR SHOULDER WRIST AND ELBOW" in str(e):
+                                    print ("PLEASE ALIGN YOUR SHOULDER WRIST AND ELBOW")
+                                    self.show_error_message("PLEASE ALIGN YOUR SHOULDER WRIST AND ELBOW")
+
 
 
                 imgtk = ImageTk.PhotoImage(image=img)
@@ -1389,6 +1392,48 @@ class DLCLiveGUI(object):
 
         self.window.destroy()
 
+
+    # def update_graph(self, i):
+    #     """ Method to update the graph data """
+    # # Assuming self.xWrist contains the updated data
+    #     if self.xWrist:  # Check if self.xWrist is not empty
+    #         self.y_data = self.xWrist  # Update y_data with the new data
+    #         self.line.set_ydata(self.y_data)  # Update the plot with the new data
+    #         self.fig.canvas.draw_idle()  # Redraw the plot to reflect the changes
+    #     return self.line,
+    def update_graph(self, i):
+        """ Method to update the graph data """
+        if self.XWristArr and self.YWristArr:  # Check if both XWristArr and YWristArr are not empty
+            self.line.set_data(self.XWristArr, self.YWristArr)  # Update the plot with the new data
+            self.ax.relim()  # Recalculate the data limits
+            self.ax.autoscale_view()  # Autoscale the axes
+            self.fig.canvas.draw_idle()  # Redraw the plot to reflect the changes
+        return self.line,
+
+    def show_error_message(self, message):
+        # Display the error message
+        self.error_label.config(text=message)
+
+        # Schedule the removal of the error message after 5 seconds
+        self.window.after(5000, self.remove_error_message)
+
+    def remove_error_message(self):
+        # Remove the error message
+        self.error_label.config(text="")
+
+    def updateReps(self, message):
+        # Display the error message
+        self.repsLabel.config(text=message)
+
+    def update_progress(self):
+        # Function to update the progress
+        if self.progress_index < len(self.progressArr):
+            self.progress_bar["value"] = self.progressArr[self.progress_index]
+            self.progress_index += 1
+            self.window.after(1000, self.update_progress)
+
+
+
     def createGUI(self):
 
         ### initialize window ###
@@ -1403,6 +1448,16 @@ class DLCLiveGUI(object):
             initial_cfg = self.cfg_list[0]
         else:
             initial_cfg = ""
+            
+        # Create a progress bar
+        self.progress_bar = ttk.Progressbar(self.window, orient="vertical", length=350, mode="determinate")
+        self.progress_bar.grid(row=0, column=1, columnspan=2)
+        cur_row += 2
+
+        Label(self.window, text="Reps: ").grid(sticky="w", row=cur_row, column=0)
+        self.repsLabel = Label(self.window, text="Reps", fg="blue")
+        self.repsLabel.grid(row=cur_row, column=1, columnspan=2)
+        cur_row += 2
 
         # Label(self.window, text="Config: ").grid(sticky="w", row=cur_row, column=0)
         self.cfg_name = StringVar(self.window, value=initial_cfg)
@@ -1418,7 +1473,7 @@ class DLCLiveGUI(object):
 
         self.get_config(initial_cfg)
 
-        cur_row += 2
+        cur_row += 1
 
         ### select camera ###
 
@@ -1541,11 +1596,10 @@ class DLCLiveGUI(object):
         self.subject = StringVar(self.window)
         self.subject_entry = Combobox(self.window, textvariable=self.subject)
         self.subject_entry["values"] = self.cfg["subjects"]
-        self.subject_entry.grid(sticky="nsew", row=cur_row, column=1)
+        # self.subject_entry.grid(sticky="nsew", row=cur_row, column=1)
         # Button(self.window, text="Add Subject", command=self.add_subject).grid(
         #     sticky="nsew", row=cur_row, column=2
         # )
-        # cur_row += 1
 
         # # attempt
         # Label(self.window, text="Attempt: ").grid(sticky="w", row=cur_row, column=0)
@@ -1553,7 +1607,7 @@ class DLCLiveGUI(object):
         self.attempt_entry = Combobox(self.window, textvariable=self.attempt)
         self.attempt_entry["values"] = tuple(range(1, 10))
         self.attempt_entry.current(0)
-        self.attempt_entry.grid(sticky="nsew", row=cur_row, column=1)
+        # self.attempt_entry.grid(sticky="nsew", row=cur_row, column=1)
         # Button(self.window, text="Remove Subject", command=self.remove_subject).grid(
         #     sticky="nsew", row=cur_row, column=2
         # )
@@ -1566,7 +1620,7 @@ class DLCLiveGUI(object):
         if self.cfg["directories"]:
             self.directory_entry["values"] = self.cfg["directories"]
             self.directory_entry.current(0)
-        self.directory_entry.grid(sticky="nsew", row=cur_row, column=1)
+        # self.directory_entry.grid(sticky="nsew", row=cur_row, column=1)
         # Button(self.window, text="Browse", command=self.browse_directory).grid(
         #     sticky="nsew", row=cur_row, column=2
         # )
@@ -1620,9 +1674,62 @@ class DLCLiveGUI(object):
 
         ### close program ###
 
+
+
+
+
+        # Create the matplotlib graph
+        self.fig, self.ax = plt.subplots()
+
+        # Example data
+        self.x_data = np.linspace(0, 10, 100)
+
+        # Initial empty data for y
+        self.y_data = np.sin(self.x_data)
+
+        # Plot the initial data
+        self.line, = self.ax.plot(self.x_data, self.y_data)
+
+        # Set up the animation
+        self.ani = animation.FuncAnimation(self.fig, self.update_graph, interval=1000)
+
+        # Embed the matplotlib graph into the Tkinter window using a canvas
+        canvas = FigureCanvasTkAgg(self.fig, master=self.window)
+        canvas.draw()
+        canvas.get_tk_widget().grid(row=0, column=0, sticky="nsew")
+        self.window.grid_rowconfigure(0, weight=1)
+        self.window.grid_columnconfigure(0, weight=1)
+
+
+
+
+
+
+
+
+
+
+
+
+        self.error_label = Label(self.window, text="Errors", fg="red")
+        self.error_label.grid(row=cur_row, column=0, columnspan=2)
+
+        self.show_error_message("No erros: Please start your exercise")
+        cur_row += 4
+
+
+
+
+
+
+
         Button(self.window, text="Close", command=self.closeGUI).grid(
             sticky="nsew", row=cur_row, column=0, columnspan=2
         )
+
+
+
+
 
         ### configure size of empty rows
 
@@ -1631,8 +1738,8 @@ class DLCLiveGUI(object):
             self.window.grid_rowconfigure(r, minsize=20)
 
     def run(self):
-
         self.window.mainloop()
+
 
 
 def main():
