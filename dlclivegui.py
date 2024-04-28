@@ -109,6 +109,7 @@ class DLCLiveGUI(object):
             "elbow": time.time()
         }
         self.progress_index = 0
+        self.image_path ="C:/Users/shana/anaconda3/envs/dlc-live/Lib/site-packages/dlclivegui/trajectory.png"
 
        
 
@@ -562,8 +563,12 @@ class DLCLiveGUI(object):
                                     self.rep = data["reps"]
                                     self.updateReps(self.rep)
                                     self.progressArr.append(data["progress"])     
-                                    self.update_progress()                         
+                                    self.update_progress()   
+                                    self.set_image_path("C:/Users/shana/anaconda3/envs/dlc-live/Lib/site-packages/dlclivegui/trajectory.png")                     
+
                                 else:
+                                        self.image_path ="C:/Users/shana/anaconda3/envs/dlc-live/Lib/site-packages/dlclivegui/SideTrajectory.png"
+                                        self.set_image_path("C:/Users/shana/anaconda3/envs/dlc-live/Lib/site-packages/dlclivegui/SideTrajectory.png")                     
                                         current_time = time.time()
                                         # 000c7c - shoulder 
                                         # 32ba19 - wrist
@@ -624,7 +629,7 @@ class DLCLiveGUI(object):
                                                     "found":self.allFound
                                                 }
                                                 self.XWristArr.append(excercise2Data["Xwrist"])
-                                                self.YWristArr.append(excercise2Data["Ywrist"])
+                                                self.YWristArr.append(excercise2Data["Ywrist"]*-1)
                                                 self.aligned = excercise2Data["aligned"]
                                                 self.AllFound = excercise2Data["found"]
                                                 self.rep = excercise2Data["reps"]
@@ -1719,7 +1724,8 @@ class DLCLiveGUI(object):
 
 
 
-
+        self.load_image()
+        cur_row += 1
 
 
 
@@ -1736,6 +1742,22 @@ class DLCLiveGUI(object):
         _, row_count = self.window.grid_size()
         for r in range(row_count):
             self.window.grid_rowconfigure(r, minsize=20)
+
+    def load_image(self):
+        # Load image
+        image = Image.open(self.image_path)
+        image = image.resize((300, 300), Image.ANTIALIAS)  # Resize image as needed
+        self.photo = ImageTk.PhotoImage(image)
+
+        # Display image using grid
+        if hasattr(self, 'label'):
+            self.label.config(image=self.photo)
+        else:
+            self.label = Label(self.window, image=self.photo)
+            self.label.grid(row=0, column=3)  # Use grid instead of pack
+    def set_image_path(self, new_path):
+        self.image_path = new_path
+        self.load_image()
 
     def run(self):
         self.window.mainloop()
